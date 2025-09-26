@@ -73,8 +73,8 @@ const Footer = ({ categories = [] }) => {
               Contact Info
             </span>
             <div className="space-y-2 text-gray-400">
-              <p>Email: info@megamart.com</p>
-              <p>Phone: +919040989360</p>
+              <p>Email: jiridavidproise@gmail.com</p>
+              <p>Phone: +91 904 098 9360</p>
               <p>
                 Address: Kings Palace 26 (Star City), KIIT University,
                 Bhubaneswar, Odisha
