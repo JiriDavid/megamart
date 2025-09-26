@@ -1,6 +1,6 @@
 // API-based storage utilities for product management
-const API_BASE_URL = import.meta.env.PROD 
-  ? '/api'  // Use relative URL in production
+const API_BASE_URL = import.meta.env.PROD
+  ? "/api" // Use relative URL in production
   : `http://localhost:${import.meta.env.VITE_API_PORT || 5001}/api`;
 
 // Fallback to localStorage when API is unavailable

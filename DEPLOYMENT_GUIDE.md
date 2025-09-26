@@ -3,11 +3,13 @@
 ## Quick Setup
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Development Mode
+
 ```bash
 # Run frontend and backend separately (recommended for development)
 npm run dev          # Starts Vite dev server on port 3000/3001
@@ -18,6 +20,7 @@ npm run dev:full     # Runs both frontend and backend concurrently
 ```
 
 ### 3. Production Mode (Local)
+
 ```bash
 npm run build        # Build the frontend
 npm start           # Start the production server (serves built frontend + API)
@@ -26,6 +29,7 @@ npm start           # Start the production server (serves built frontend + API)
 ## 🌐 Vercel Deployment
 
 ### Step 1: Prepare Environment Variables
+
 In your Vercel dashboard, add these environment variables:
 
 ```
@@ -37,6 +41,7 @@ VITE_CLOUDINARY_UPLOAD_PRESET=your_cloudinary_preset
 ```
 
 ### Step 2: Deploy
+
 ```bash
 # Using Vercel CLI
 npm i -g vercel
@@ -46,17 +51,20 @@ vercel
 ```
 
 ### Step 3: MongoDB Atlas Setup
+
 1. Whitelist `0.0.0.0/0` (all IPs) in MongoDB Atlas Network Access
 2. Or whitelist Vercel's IP ranges
 
 ## 🔧 How It Works
 
 ### Development Mode
+
 - **Frontend**: Vite dev server (http://localhost:3000 or 3001)
 - **Backend**: Express server (http://localhost:5001)
 - **API Calls**: Frontend makes requests to `http://localhost:5001/api`
 
 ### Production Mode
+
 - **Everything**: Single Express server serves both frontend and API
 - **Frontend**: Served from `/dist` folder (static files)
 - **Backend**: API routes on `/api/*`

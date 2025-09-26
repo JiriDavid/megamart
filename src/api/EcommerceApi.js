@@ -9,8 +9,8 @@ import {
 } from "@/lib/storage";
 
 // API Base URL - Dynamic based on environment
-const API_BASE_URL = import.meta.env.PROD 
-  ? '/api'  // Use relative URL in production
+const API_BASE_URL = import.meta.env.PROD
+  ? "/api" // Use relative URL in production
   : `http://localhost:${import.meta.env.VITE_API_PORT || 5001}/api`;
 
 // Helper function for API calls
