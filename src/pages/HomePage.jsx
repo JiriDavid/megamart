@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import ProductsList from "@/components/ProductsList";
+import Footer from "@/components/Footer";
 import { getCategories } from "@/api/EcommerceApi";
 
 const HomePage = () => {
@@ -134,66 +135,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <ShoppingBag className="h-8 w-8 text-purple-400" />
-                <span className="text-2xl font-bold">MegaMart</span>
-              </div>
-              <p className="text-gray-400">
-                Your destination for premium fashion and style.
-              </p>
-            </div>
-            <div>
-              <span className="text-lg font-semibold mb-4 block">
-                Quick Links
-              </span>
-              <div className="space-y-2">
-                <Link
-                  to="/"
-                  className="text-gray-400 hover:text-white transition-colors block"
-                >
-                  Home
-                </Link>
-                <Link
-                  to="/contact"
-                  className="text-gray-400 hover:text-white transition-colors block"
-                >
-                  Contact
-                </Link>
-              </div>
-            </div>
-            <div>
-              <span className="text-lg font-semibold mb-4 block">
-                Categories
-              </span>
-              <div className="space-y-2">
-                {categories.slice(1, 4).map((cat) => (
-                  <span key={cat} className="text-gray-400 block capitalize">
-                    {cat}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <span className="text-lg font-semibold mb-4 block">
-                Contact Info
-              </span>
-              <div className="space-y-2 text-gray-400">
-                <p>Email: info@megamart.com</p>
-                <p>Phone: (555) 123-4567</p>
-                <p>Address: 123 Fashion St, Style City</p>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 MegaMart. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer categories={categories} />
     </div>
   );
 };

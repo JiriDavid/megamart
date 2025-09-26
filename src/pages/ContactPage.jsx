@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import Footer from "@/components/Footer";
 import { useToast } from "@/components/ui/use-toast";
 
 const ContactPage = () => {
@@ -300,6 +301,8 @@ const ContactPage = () => {
           </motion.div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };
