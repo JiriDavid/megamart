@@ -391,7 +391,10 @@ const deleteProductFallback = (productId) => {
 
 const getProductByIdFallback = (productId) => {
   const products = getFromStorage("products");
-  return products.find((p) => p.id === productId) || null;
+  // Search by both id and _id fields to handle different ID formats
+  return (
+    products.find((p) => p.id === productId || p._id === productId) || null
+  );
 };
 
 // Fallback functions for orders

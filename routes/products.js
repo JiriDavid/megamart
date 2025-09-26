@@ -68,17 +68,41 @@ router.get("/", checkDBConnection, async (req, res) => {
   }
 });
 
+// GET /api/products/categories - Get all categories
+router.get("/categories", checkDBConnection, async (req, res) => {
+  try {
+    const categories = await Product.distinct("category");
+    const categoryObjects = categories.map((category) => ({
+      id: category,
+      name: category,
+    }));
+    res.json({ categories: categoryObjects });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
 // GET /api/products/:id - Get single product
 router.get("/:id", checkDBConnection, async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid product ID format" });
+    const productId = req.params.id;
+    let product;
+
+    // Try to find by MongoDB ObjectId first
+    if (mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findById(productId);
+    } else {
+      // If not a valid ObjectId, try to find by any ID field
+      product = await Product.findOne({
+        $or: [{ _id: productId }, { id: productId }],
+      });
     }
 
-    const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
+
     res.json(product);
   } catch (error) {
     console.error("Error fetching product:", error);
@@ -104,14 +128,29 @@ router.post("/", checkDBConnection, async (req, res) => {
 // PUT /api/products/:id - Update product
 router.put("/:id", checkDBConnection, async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid product ID format" });
+    const productId = req.params.id;
+    let product;
+
+    // Try to update by MongoDB ObjectId first
+    if (mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findByIdAndUpdate(productId, req.body, {
+        new: true,
+        runValidators: true,
+      });
+    } else {
+      // If not a valid ObjectId, try to find and update by any ID field
+      product = await Product.findOneAndUpdate(
+        {
+          $or: [{ _id: productId }, { id: productId }],
+        },
+        req.body,
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
     }
 
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
@@ -128,11 +167,19 @@ router.put("/:id", checkDBConnection, async (req, res) => {
 // DELETE /api/products/:id - Delete product
 router.delete("/:id", checkDBConnection, async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid product ID format" });
+    const productId = req.params.id;
+    let product;
+
+    // Try to delete by MongoDB ObjectId first
+    if (mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findByIdAndDelete(productId);
+    } else {
+      // If not a valid ObjectId, try to find and delete by any ID field
+      product = await Product.findOneAndDelete({
+        $or: [{ _id: productId }, { id: productId }],
+      });
     }
 
-    const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }

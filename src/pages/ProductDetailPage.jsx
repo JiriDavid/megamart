@@ -35,19 +35,25 @@ const ProductDetailPage = () => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
+        console.log("Fetching product with ID:", id);
         const fetchedProduct = await getProductById(id);
+        console.log("Fetched product:", fetchedProduct);
         setProduct(fetchedProduct);
       } catch (error) {
+        console.error("Failed to fetch product:", error);
         toast({
           title: "Error",
-          description: "Could not fetch product details.",
+          description: `Could not fetch product details: ${error.message}`,
           variant: "destructive",
         });
       } finally {
         setLoading(false);
       }
     };
-    fetchProduct();
+
+    if (id) {
+      fetchProduct();
+    }
   }, [id, toast]);
 
   const handleAddToCart = () => {
@@ -109,13 +115,24 @@ const ProductDetailPage = () => {
       <>
         <Header />
         <div className="text-center py-20">
-          <h1 className="text-2xl font-bold">Product not found</h1>
-          <Link
-            to="/"
-            className="text-purple-600 hover:underline mt-4 inline-block"
-          >
-            Back to Home
-          </Link>
+          <div className="max-w-md mx-auto">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              Product Not Found
+            </h1>
+            <p className="text-gray-600 mb-8">
+              The product you're looking for doesn't exist or may have been
+              removed.
+            </p>
+            <div className="space-y-4">
+              <Link
+                to="/products"
+                className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors"
+              >
+                Browse All Products
+              </Link>
+              <div className="text-sm text-gray-500">Product ID: {id}</div>
+            </div>
+          </div>
         </div>
       </>
     );
