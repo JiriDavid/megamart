@@ -111,7 +111,7 @@ if (process.env.NODE_ENV === "production") {
     if (req.path.startsWith("/api")) {
       return res.status(404).json({ error: "API endpoint not found" });
     }
-    
+
     console.log(`Serving index.html for route: ${req.path}`);
     res.sendFile(path.join(__dirname, "dist", "index.html"));
   });
@@ -121,11 +121,11 @@ if (process.env.NODE_ENV === "production") {
     if (req.path.startsWith("/api")) {
       return res.status(404).json({ error: "API endpoint not found" });
     }
-    
+
     res.json({
       message: "MegaMart API Server - Frontend served by Vite",
       frontend: "http://localhost:3000 or http://localhost:3001",
-      api: `http://localhost:${PORT}/api`
+      api: `http://localhost:${PORT}/api`,
     });
   });
 }
