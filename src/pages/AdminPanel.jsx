@@ -18,7 +18,7 @@ import ProductForm from "@/components/ProductForm";
 import ProductList from "@/components/ProductList";
 import {
   getProducts,
-  getOrders, 
+  getOrders,
   updateOrder,
   saveProduct,
   deleteProduct,
