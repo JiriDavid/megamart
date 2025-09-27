@@ -2,14 +2,7 @@ import express from "express";
 import Order from "../models/Order.js";
 import mongoose from "mongoose";
 
-const order = new Order({ ...orderData, user });
-    await order.save();
-
-    // Populate the order for response
-    await order.populate("user", "firstName lastName email");
-    await order.populate("items.product", "name image price");
-
-    res.status(201).json(order);ter();
+const router = express.Router();
 
 // GET /api/orders - Get all orders (admin) or user's orders
 router.get("/", async (req, res) => {
@@ -125,19 +118,9 @@ router.post("/", async (req, res) => {
     const order = new Order({ ...orderData, user });
     await order.save();
 
-    console.log("✅ Order saved to database:");
-    console.log("   Order._id:", order._id);
-    console.log("   Order.id:", order.id);
-
     // Populate the order for response
     await order.populate("user", "firstName lastName email");
     await order.populate("items.product", "name image price");
-
-    console.log("📤 Sending order response:", {
-      _id: order._id,
-      id: order.id,
-      orderNumber: order.orderNumber,
-    });
 
     res.status(201).json(order);
   } catch (error) {
