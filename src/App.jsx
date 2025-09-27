@@ -17,6 +17,7 @@ import CartPage from "@/pages/CartPage";
 import WishListPage from "@/pages/WishListPage";
 import ContactPage from "@/pages/ContactPage";
 import AdminPanel from "@/pages/AdminPanel";
+import NotFoundPage from "@/pages/NotFoundPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ShoppingCart from "@/components/ShoppingCart";
 
@@ -71,6 +72,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
               <Toaster />
             </div>

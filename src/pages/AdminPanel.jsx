@@ -17,15 +17,13 @@ import { useToast } from "@/components/ui/use-toast";
 import ProductForm from "@/components/ProductForm";
 import ProductList from "@/components/ProductList";
 import {
-  getProductsEnhanced,
-  saveProductEnhanced,
-  deleteProductEnhanced,
-} from "@/lib/storage";
-import {
-  getOrdersEnhanced,
-  updateOrderEnhanced,
-  getUsersEnhanced,
-} from "@/lib/storage";
+  getProducts,
+  getOrders, 
+  updateOrder,
+  saveProduct,
+  deleteProduct,
+} from "@/api/EcommerceApi";
+import { getUsersEnhanced } from "@/lib/storage";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AdminPanel = () => {
@@ -55,12 +53,12 @@ const AdminPanel = () => {
   };
 
   const loadProducts = async () => {
-    const storedProducts = await getProductsEnhanced();
+    const storedProducts = await getProducts();
     setProducts(storedProducts);
   };
 
   const loadOrders = async () => {
-    const storedOrders = await getOrdersEnhanced();
+    const storedOrders = await getOrders();
     setOrders(storedOrders);
   };
 
@@ -73,7 +71,7 @@ const AdminPanel = () => {
 
   const handleOrderUpdate = async (orderId, status) => {
     try {
-      await updateOrderEnhanced(orderId, { status });
+      await updateOrder(orderId, { status });
       await loadOrders();
       toast({
         title: "Order Updated",
@@ -91,13 +89,13 @@ const AdminPanel = () => {
   const handleSaveProduct = async (productData) => {
     try {
       if (editingProduct) {
-        await saveProductEnhanced({ ...productData, id: editingProduct.id });
+        await saveProduct({ ...productData, id: editingProduct.id });
         toast({
           title: "Product Updated!",
           description: "Product has been successfully updated.",
         });
       } else {
-        await saveProductEnhanced(productData);
+        await saveProduct(productData);
         toast({
           title: "Product Added!",
           description: "New product has been successfully added.",
@@ -122,7 +120,7 @@ const AdminPanel = () => {
 
   const handleDeleteProduct = async (productId) => {
     try {
-      await deleteProductEnhanced(productId);
+      await deleteProduct(productId);
       await loadProducts();
       toast({
         title: "Product Deleted!",

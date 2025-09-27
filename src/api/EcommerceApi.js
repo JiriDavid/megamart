@@ -6,6 +6,8 @@ import {
   deleteProductEnhanced,
   initializeSampleData,
   saveOrderEnhanced,
+  getOrdersEnhanced,
+  updateOrderEnhanced,
 } from "@/lib/storage";
 
 // API Base URL - Dynamic based on environment
@@ -198,6 +200,39 @@ export const getOrderById = async (orderId) => {
   } catch (error) {
     console.error("API call failed for order:", error);
     throw new Error("Order not found");
+  }
+};
+
+// Update order
+export const updateOrder = async (orderId, updateData) => {
+  try {
+    // Try API first
+    const data = await apiCall(`/orders/${orderId}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData),
+    });
+    const order = data.order || data;
+    return normalizeOrder(order);
+  } catch (error) {
+    console.error("API call failed, using storage fallback:", error);
+    // Fallback to enhanced storage function
+    const order = await updateOrderEnhanced(orderId, updateData);
+    return normalizeOrder(order);
+  }
+};
+
+// Get all orders (for admin)
+export const getOrders = async () => {
+  try {
+    // Try API first
+    const data = await apiCall("/orders");
+    const orders = data.orders || data || [];
+    return orders.map(normalizeOrder);
+  } catch (error) {
+    console.error("API call failed, using storage fallback:", error);
+    // Fallback to enhanced storage function
+    const orders = await getOrdersEnhanced();
+    return orders.map(normalizeOrder);
   }
 };
 
