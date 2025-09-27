@@ -38,6 +38,22 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware to ensure JSON responses
+app.use((req, res, next) => {
+  // Override res.send to ensure JSON responses
+  const originalSend = res.send;
+  res.send = function(data) {
+    if (typeof data === 'object' && data !== null) {
+      return res.json(data);
+    }
+    if (typeof data !== 'string') {
+      return res.json({ data: String(data) });
+    }
+    return originalSend.call(this, data);
+  };
+  next();
+});
+
 // Database connection
 const connectDB = async () => {
   try {
@@ -93,56 +109,50 @@ app.use("/api/payments", paymentRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
-  res.json({
-    status: "OK",
-    message: "MegaMart API is running",
-    environment: process.env.NODE_ENV,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Serve static files from React build in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "dist")));
-
-  // Handle React routing, return all requests to React app
-  app.get("*", (req, res) => {
-    // Don't intercept API routes
-    if (req.path.startsWith("/api")) {
-      return res.status(404).json({ error: "API endpoint not found" });
-    }
-
-    console.log(`Serving index.html for route: ${req.path}`);
-    res.sendFile(path.join(__dirname, "dist", "index.html"));
-  });
-} else {
-  // Development mode - let Vite handle routing
-  app.get("*", (req, res) => {
-    if (req.path.startsWith("/api")) {
-      return res.status(404).json({ error: "API endpoint not found" });
-    }
-
-    res.json({
-      message: "MegaMart API Server - Frontend served by Vite",
-      frontend: "http://localhost:3000 or http://localhost:3001",
-      api: `http://localhost:${PORT}/api`,
+  try {
+    res.status(200).json({
+      status: "OK",
+      message: "MegaMart API is running",
+      environment: process.env.NODE_ENV || "development",
+      timestamp: new Date().toISOString(),
     });
-  });
-}
+  } catch (error) {
+    console.error("Health check error:", error);
+    res.status(500).json({ error: "Health check failed" });
+  }
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Something went wrong!" });
+  console.error("Server error:", err.stack);
+  res.status(500).json({ error: "Internal server error" });
 });
 
 // Initialize database connection
 const initializeApp = async () => {
-  await connectDB();
+  try {
+    await connectDB();
+    console.log("Database initialized for serverless function");
+  } catch (error) {
+    console.error("Database initialization failed:", error);
+  }
 };
 
-// Initialize for deployment
+// Initialize for deployment (both local and serverless)
 initializeApp();
+
+// Add catch-all for non-API routes in serverless (should not happen due to Vercel routing)
+app.get("*", (req, res) => {
+  if (!req.path.startsWith("/api")) {
+    // This shouldn't happen in serverless, but just in case
+    res.status(404).json({ 
+      error: "Route not found",
+      message: "This endpoint should be handled by Vercel routing" 
+    });
+  } else {
+    res.status(404).json({ error: "API endpoint not found" });
+  }
+});
 
 // For local development only
 if (!process.env.VERCEL) {
