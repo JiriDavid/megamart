@@ -26,7 +26,7 @@ const TrackOrderPage = () => {
       if (!id || id === "undefined" || id === "null") {
         throw new Error(`Invalid order ID: ${id}`);
       }
-      
+
       const orderData = await getOrderById(id);
       setOrder(orderData);
     } catch (error) {
@@ -131,10 +131,15 @@ const TrackOrderPage = () => {
               {/* Status Timeline */}
               <div className="relative">
                 <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-300"></div>
-                <div 
+                <div
                   className="absolute top-6 left-0 h-0.5 bg-green-500 transition-all duration-500"
-                  style={{ 
-                    width: `${(getStatusSteps(order.status).filter(s => s.completed).length - 1) * (100 / (getStatusSteps(order.status).length - 1))}%` 
+                  style={{
+                    width: `${
+                      (getStatusSteps(order.status).filter((s) => s.completed)
+                        .length -
+                        1) *
+                      (100 / (getStatusSteps(order.status).length - 1))
+                    }%`,
                   }}
                 ></div>
                 <div className="relative flex justify-between items-center">
@@ -178,54 +183,73 @@ const TrackOrderPage = () => {
                 Order Details
               </h2>
               <div className="space-y-4">
-                {order.items && order.items.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center space-x-4 border-b pb-4 last:border-b-0"
-                  >
-                    <img
-                      src={item.image || "https://via.placeholder.com/64"}
-                      alt={item.name}
-                      className="w-16 h-16 object-cover rounded-lg"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">
-                        {item.name}
-                      </h3>
-                      <div className="text-sm text-gray-600">
-                        <span>Quantity: {item.quantity}</span>
-                        {item.size && <span> | Size: {item.size}</span>}
-                        {item.color && <span> | Color: {item.color}</span>}
+                {order.items &&
+                  order.items.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center space-x-4 border-b pb-4 last:border-b-0"
+                    >
+                      <img
+                        src={item.image || "https://via.placeholder.com/64"}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">
+                          {item.name}
+                        </h3>
+                        <div className="text-sm text-gray-600">
+                          <span>Quantity: {item.quantity}</span>
+                          {item.size && <span> | Size: {item.size}</span>}
+                          {item.color && <span> | Color: {item.color}</span>}
+                        </div>
+                        <p className="text-lg font-bold text-purple-600">
+                          ₹
+                          {((item.price || 0) * (item.quantity || 1)).toFixed(
+                            2
+                          )}
+                        </p>
                       </div>
-                      <p className="text-lg font-bold text-purple-600">
-                        ₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
               <div className="mt-6 border-t pt-4">
                 <div className="flex justify-between text-lg">
                   <span>Subtotal:</span>
-                  <span>₹{(order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2)}</span>
+                  <span>
+                    ₹
+                    {order.items
+                      .reduce(
+                        (sum, item) => sum + item.price * item.quantity,
+                        0
+                      )
+                      .toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-lg">
                   <span>Shipping:</span>
-                  <span>₹{order.shippingCost ? order.shippingCost.toFixed(2) : '50.00'}</span>
+                  <span>
+                    ₹
+                    {order.shippingCost
+                      ? order.shippingCost.toFixed(2)
+                      : "50.00"}
+                  </span>
                 </div>
                 <div className="flex justify-between text-xl font-bold mt-2">
                   <span>Total:</span>
-                  <span>₹{(order.totalAmount || order.total || 0).toFixed(2)}</span>
+                  <span>
+                    ₹{(order.totalAmount || order.total || 0).toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Delivery Info */}
-            {(order.status === "paid" ||
+            {order.status === "paid" ||
             order.status === "processing" ||
             order.status === "shipped" ||
-            order.status === "delivered") ? (
+            order.status === "delivered" ? (
               <div className="bg-blue-50 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-blue-900 mb-2">
                   Delivery Information
@@ -236,7 +260,8 @@ const TrackOrderPage = () => {
                 </p>
                 {order.trackingNumber && (
                   <p className="text-blue-800 mt-2">
-                    <span className="font-semibold">Tracking Number:</span> {order.trackingNumber}
+                    <span className="font-semibold">Tracking Number:</span>{" "}
+                    {order.trackingNumber}
                   </p>
                 )}
               </div>
@@ -250,10 +275,19 @@ const TrackOrderPage = () => {
                 </h2>
                 <div className="space-y-4">
                   {order.orderHistory.map((history, index) => (
-                    <div key={index} className="flex justify-between items-center py-3 border-b last:border-b-0">
+                    <div
+                      key={index}
+                      className="flex justify-between items-center py-3 border-b last:border-b-0"
+                    >
                       <div>
-                        <p className="font-semibold text-gray-900 capitalize">{history.status}</p>
-                        {history.note && <p className="text-sm text-gray-600">{history.note}</p>}
+                        <p className="font-semibold text-gray-900 capitalize">
+                          {history.status}
+                        </p>
+                        {history.note && (
+                          <p className="text-sm text-gray-600">
+                            {history.note}
+                          </p>
+                        )}
                       </div>
                       <p className="text-sm text-gray-500">
                         {new Date(history.timestamp).toLocaleString()}
