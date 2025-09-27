@@ -18,9 +18,11 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
+    assetsDir: "assets",
   },
   preview: {
     port: 3000,
     open: true,
   },
+  base: "/", // Ensure base URL is correct for Vercel
 });

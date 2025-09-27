@@ -107,7 +107,26 @@ if (process.env.NODE_ENV === "production") {
 
   // Handle React routing, return all requests to React app
   app.get("*", (req, res) => {
+    // Don't intercept API routes
+    if (req.path.startsWith("/api")) {
+      return res.status(404).json({ error: "API endpoint not found" });
+    }
+    
+    console.log(`Serving index.html for route: ${req.path}`);
     res.sendFile(path.join(__dirname, "dist", "index.html"));
+  });
+} else {
+  // Development mode - let Vite handle routing
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api")) {
+      return res.status(404).json({ error: "API endpoint not found" });
+    }
+    
+    res.json({
+      message: "MegaMart API Server - Frontend served by Vite",
+      frontend: "http://localhost:3000 or http://localhost:3001",
+      api: `http://localhost:${PORT}/api`
+    });
   });
 }
 
