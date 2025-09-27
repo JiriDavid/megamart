@@ -11,20 +11,13 @@ const checkDBConnection = async (req, res, next) => {
     return next();
   }
 
-  // In serverless/production, if not connected, use fallback immediately
-  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
-    return res.status(503).json({
-      error: "Database not available",
-      message: "Using localStorage fallback on frontend",
-      fallback: true,
-    });
-  }
-
-  // In development, try to connect
+  // Always try to connect first, regardless of environment
   try {
     const isLocalhost =
       process.env.MONGODB_URI?.includes("localhost") ||
       !process.env.MONGODB_URI?.includes("mongodb+srv");
+
+    console.log("Attempting database connection in middleware...");
 
     await mongoose.connect(
       process.env.MONGODB_URI || "mongodb://localhost:27017/megamart",
@@ -35,20 +28,22 @@ const checkDBConnection = async (req, res, next) => {
             tls: true,
             tlsAllowInvalidCertificates: false,
             tlsAllowInvalidHostnames: false,
-            serverSelectionTimeoutMS: 5000,
+            serverSelectionTimeoutMS: 5000, // Shorter timeout for serverless
             socketTimeoutMS: 45000,
           }
     );
 
     // Check if connection is now ready
     if (mongoose.connection.readyState === 1) {
+      console.log("Database connected successfully in middleware");
       return next();
     }
   } catch (error) {
-    console.error("Database connection check failed:", error);
+    console.error("Database connection failed in middleware:", error.message);
   }
 
   // If connection failed or still not ready, return fallback
+  console.log("Database not available, using fallback");
   return res.status(503).json({
     error: "Database not available",
     message: "Using localStorage fallback on frontend",

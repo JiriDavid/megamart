@@ -68,12 +68,15 @@ const connectDB = async () => {
       !process.env.MONGODB_URI?.includes("mongodb+srv");
 
     console.log("Attempting to connect to MongoDB...");
+    console.log("Environment:", process.env.NODE_ENV);
+    console.log("Is Vercel:", !!process.env.VERCEL);
     console.log(
       "URI:",
       process.env.MONGODB_URI
-        ? process.env.MONGODB_URI.substring(0, 20) + "..."
+        ? process.env.MONGODB_URI.substring(0, 30) + "..."
         : "Not set"
     );
+    console.log("Is localhost connection:", isLocalhost);
 
     const conn = await mongoose.connect(
       process.env.MONGODB_URI || "mongodb://localhost:27017/megamart",
@@ -89,9 +92,25 @@ const connectDB = async () => {
           }
     );
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(`Database: ${conn.connection.name}`);
     return true;
   } catch (error) {
     console.error("❌ Database connection error:", error.message);
+    console.error("Error code:", error.code);
+    console.error("Error name:", error.name);
+    if (error.code === 8000) {
+      console.error(
+        "❌ IP whitelist issue: Your IP is not whitelisted in MongoDB Atlas"
+      );
+    } else if (error.code === 18) {
+      console.error(
+        "❌ Authentication failed: Check username/password in connection string"
+      );
+    } else if (error.message.includes("ENOTFOUND")) {
+      console.error(
+        "❌ DNS resolution failed: Check cluster URL in connection string"
+      );
+    }
     console.log("\n🔄 Starting with localStorage fallback for development...");
     console.log(
       "ℹ️  The application will use local storage for data persistence."

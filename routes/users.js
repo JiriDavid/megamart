@@ -144,6 +144,7 @@ router.post("/login", async (req, res) => {
   try {
     // Check database connection for login
     if (mongoose.connection.readyState !== 1) {
+      console.log("Database not connected for login, using fallback");
       return res.status(503).json({
         error: "Database not available",
         message: "Using localStorage fallback on frontend",
