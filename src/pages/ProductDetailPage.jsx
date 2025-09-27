@@ -31,16 +31,30 @@ const ProductDetailPage = () => {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
+  // Debug logging
+  console.log("ProductDetailPage - Route param ID:", id);
+  console.log("ProductDetailPage - Type of ID:", typeof id);
+  console.log("ProductDetailPage - ID is undefined?", id === undefined);
+  console.log("ProductDetailPage - ID is null?", id === null);
+
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        console.log("Fetching product with ID:", id);
+        console.log("🔍 Fetching product with ID:", id);
+        console.log("🔍 Type of ID:", typeof id);
+        console.log("🔍 ID value:", JSON.stringify(id));
+
+        if (!id || id === "undefined" || id === "null") {
+          throw new Error(`Invalid product ID: ${id}`);
+        }
+
         const fetchedProduct = await getProductById(id);
-        console.log("Fetched product:", fetchedProduct);
+        console.log("✅ Fetched product:", fetchedProduct);
         setProduct(fetchedProduct);
       } catch (error) {
-        console.error("Failed to fetch product:", error);
+        console.error("❌ Failed to fetch product:", error);
+        console.error("❌ Error details:", error.message);
         toast({
           title: "Error",
           description: `Could not fetch product details: ${error.message}`,
@@ -51,8 +65,12 @@ const ProductDetailPage = () => {
       }
     };
 
-    if (id) {
+    console.log("🎯 useEffect triggered with ID:", id);
+    if (id && id !== "undefined" && id !== "null") {
       fetchProduct();
+    } else {
+      console.error("❌ Invalid ID in useEffect:", id);
+      setLoading(false);
     }
   }, [id, toast]);
 

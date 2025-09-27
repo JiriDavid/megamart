@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
 import Footer from "@/components/Footer";
-import { getProductsEnhanced } from "@/lib/storage";
+import { getProducts } from "@/api/EcommerceApi";
 import { useToast } from "@/components/ui/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { Loader2, ShoppingBag } from "lucide-react";
@@ -27,7 +27,7 @@ const ProductsPage = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const fetchedProducts = await getProductsEnhanced();
+        const fetchedProducts = await getProducts();
         setProducts(fetchedProducts);
 
         // Extract unique categories

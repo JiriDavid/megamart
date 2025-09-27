@@ -16,6 +16,21 @@ const checkDBConnection = (req, res, next) => {
   next();
 };
 
+// GET /api/products/categories - Get all categories (MUST come before /:id route)
+router.get("/categories", checkDBConnection, async (req, res) => {
+  try {
+    const categories = await Product.distinct("category");
+    const categoryObjects = categories.map((category) => ({
+      id: category,
+      name: category,
+    }));
+    res.json({ categories: categoryObjects });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
 // GET /api/products - Get all products with optional filtering
 router.get("/", checkDBConnection, async (req, res) => {
   try {
@@ -68,25 +83,20 @@ router.get("/", checkDBConnection, async (req, res) => {
   }
 });
 
-// GET /api/products/categories - Get all categories
-router.get("/categories", checkDBConnection, async (req, res) => {
-  try {
-    const categories = await Product.distinct("category");
-    const categoryObjects = categories.map((category) => ({
-      id: category,
-      name: category,
-    }));
-    res.json({ categories: categoryObjects });
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    res.status(500).json({ error: "Failed to fetch categories" });
-  }
-});
-
 // GET /api/products/:id - Get single product
 router.get("/:id", checkDBConnection, async (req, res) => {
   try {
     const productId = req.params.id;
+
+    // Add validation for undefined or invalid IDs
+    if (!productId || productId === "undefined" || productId === "null") {
+      return res.status(400).json({
+        error: "Invalid product ID",
+        received: productId,
+        message: "Product ID cannot be undefined or null",
+      });
+    }
+
     let product;
 
     // Try to find by MongoDB ObjectId first

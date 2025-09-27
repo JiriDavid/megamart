@@ -2,7 +2,14 @@ import express from "express";
 import Order from "../models/Order.js";
 import mongoose from "mongoose";
 
-const router = express.Router();
+const order = new Order({ ...orderData, user });
+    await order.save();
+
+    // Populate the order for response
+    await order.populate("user", "firstName lastName email");
+    await order.populate("items.product", "name image price");
+
+    res.status(201).json(order);ter();
 
 // GET /api/orders - Get all orders (admin) or user's orders
 router.get("/", async (req, res) => {
@@ -58,13 +65,32 @@ router.get("/", async (req, res) => {
 // GET /api/orders/:id - Get single order
 router.get("/:id", async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ error: "Invalid order ID format" });
+    const orderId = req.params.id;
+
+    // Add validation for undefined or invalid IDs
+    if (!orderId || orderId === "undefined" || orderId === "null") {
+      return res.status(400).json({
+        error: "Invalid order ID",
+        received: orderId,
+        message: "Order ID cannot be undefined or null",
+      });
     }
 
-    const order = await Order.findById(req.params.id)
-      .populate("user", "firstName lastName email")
-      .populate("items.product", "name image price");
+    let order;
+
+    // Try to find by MongoDB ObjectId first
+    if (mongoose.Types.ObjectId.isValid(orderId)) {
+      order = await Order.findById(orderId)
+        .populate("user", "firstName lastName email")
+        .populate("items.product", "name image price");
+    } else {
+      // If not a valid ObjectId, try to find by any ID field
+      order = await Order.findOne({
+        $or: [{ _id: orderId }, { id: orderId }],
+      })
+        .populate("user", "firstName lastName email")
+        .populate("items.product", "name image price");
+    }
 
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -99,9 +125,19 @@ router.post("/", async (req, res) => {
     const order = new Order({ ...orderData, user });
     await order.save();
 
+    console.log("✅ Order saved to database:");
+    console.log("   Order._id:", order._id);
+    console.log("   Order.id:", order.id);
+
     // Populate the order for response
     await order.populate("user", "firstName lastName email");
     await order.populate("items.product", "name image price");
+
+    console.log("📤 Sending order response:", {
+      _id: order._id,
+      id: order.id,
+      orderNumber: order.orderNumber,
+    });
 
     res.status(201).json(order);
   } catch (error) {

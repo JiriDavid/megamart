@@ -42,17 +42,48 @@ const apiCall = async (endpoint, options = {}) => {
 // Initialize sample data if no products exist (fallback only)
 initializeSampleData();
 
+// Helper function to normalize product data
+const normalizeProduct = (product) => {
+  if (!product) return product;
+
+  // Ensure the product has an id field for frontend compatibility
+  if (product._id && !product.id) {
+    product.id = product._id.toString();
+  }
+
+  return product;
+};
+
+// Helper function to normalize order data
+const normalizeOrder = (order) => {
+  if (!order) return order;
+
+  // Ensure the order has an id field for frontend compatibility
+  if (order._id && !order.id) {
+    order.id = order._id.toString();
+  }
+
+  return order;
+};
+
+// Helper function to normalize array of products
+const normalizeProducts = (products) => {
+  if (!Array.isArray(products)) return products;
+  return products.map(normalizeProduct);
+};
+
 // Get all products
 export const getProducts = async () => {
   try {
     // Try API first
     const data = await apiCall("/products");
-    return data.products || data || [];
+    const products = data.products || data || [];
+    return normalizeProducts(products);
   } catch (error) {
     console.error("API call failed, using storage fallback:", error);
     // Fallback to enhanced storage function
     const products = await getProductsEnhanced();
-    return products;
+    return normalizeProducts(products);
   }
 };
 
@@ -61,7 +92,8 @@ export const getProductById = async (id) => {
   try {
     // Try API first
     const data = await apiCall(`/products/${id}`);
-    return data.product || data;
+    const product = data.product || data;
+    return normalizeProduct(product);
   } catch (error) {
     console.error("API call failed, using storage fallback:", error);
     // Fallback to enhanced storage function
@@ -69,7 +101,7 @@ export const getProductById = async (id) => {
     if (!product) {
       throw new Error("Product not found");
     }
-    return product;
+    return normalizeProduct(product);
   }
 };
 
@@ -97,19 +129,21 @@ export const saveProduct = async (productData) => {
         method: "PUT",
         body: JSON.stringify(productData),
       });
-      return data.product || data;
+      const product = data.product || data;
+      return normalizeProduct(product);
     } else {
       const data = await apiCall("/products", {
         method: "POST",
         body: JSON.stringify(productData),
       });
-      return data.product || data;
+      const product = data.product || data;
+      return normalizeProduct(product);
     }
   } catch (error) {
     console.error("API call failed, using storage fallback:", error);
     // Fallback to enhanced storage function
     const result = await saveProductEnhanced(productData);
-    return result;
+    return normalizeProduct(result);
   }
 };
 
@@ -129,7 +163,45 @@ export const deleteProduct = async (productId) => {
   }
 };
 
-// Initialize checkout (create order)
+// Create order (improved version)
+export const createOrder = async (orderData) => {
+  try {
+    // Try API first
+    const data = await apiCall("/orders", {
+      method: "POST",
+      body: JSON.stringify(orderData),
+    });
+
+    const order = data.order || data;
+
+    // Apply normalization to ensure ID is available
+    const normalizedOrder = normalizeOrder(order);
+
+    return normalizedOrder;
+  } catch (error) {
+    console.error("API call failed, using storage fallback:", error);
+    // Fallback to enhanced storage function
+    const order = await saveOrderEnhanced(orderData);
+
+    return normalizeOrder(order);
+  }
+};
+
+// Get order by ID
+export const getOrderById = async (orderId) => {
+  try {
+    // Try API first
+    const data = await apiCall(`/orders/${orderId}`);
+    const order = data.order || data;
+
+    return normalizeOrder(order);
+  } catch (error) {
+    console.error("API call failed for order:", error);
+    throw new Error("Order not found");
+  }
+};
+
+// Initialize checkout (create order) - DEPRECATED, use createOrder instead
 export const initializeCheckout = async (cartItems) => {
   try {
     // Simulate API call delay
@@ -162,21 +234,32 @@ export const initializeCheckout = async (cartItems) => {
         method: "POST",
         body: JSON.stringify(orderData),
       });
+
       const order = data.order || data;
 
-      // Redirect to order success page with order ID
-      window.location.href = `/order-success/${order.id || order._id}`;
+      // Apply normalization to ensure ID is available
+      const normalizedOrder = normalizeOrder(order);
+      const orderId = normalizedOrder.id || normalizedOrder._id;
 
-      return { success: true, orderId: order.id || order._id };
+      if (!orderId) {
+        throw new Error("Order was created but no ID was returned");
+      }
+
+      // Redirect to order success page with order ID
+      window.location.href = `/order-success/${orderId}`;
+
+      return { success: true, orderId: orderId };
     } catch (error) {
       console.error("API call failed, using storage fallback:", error);
       // Fallback to enhanced storage function
       const order = await saveOrderEnhanced(orderData);
 
-      // Redirect to order success page with order ID
-      window.location.href = `/order-success/${order.id}`;
+      const orderId = order.id || order._id;
 
-      return { success: true, orderId: order.id };
+      // Redirect to order success page with order ID
+      window.location.href = `/order-success/${orderId}`;
+
+      return { success: true, orderId: orderId };
     }
   } catch (error) {
     console.error("Error creating order:", error);

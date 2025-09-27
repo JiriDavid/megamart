@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
-import { getOrderByIdEnhanced } from "@/lib/storage";
+import { getOrderById } from "@/api/EcommerceApi";
 
 const OrderSuccessPage = () => {
   const { orderId } = useParams();
@@ -21,7 +21,11 @@ const OrderSuccessPage = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const orderData = await getOrderByIdEnhanced(orderId);
+        if (!orderId || orderId === "undefined" || orderId === "null") {
+          throw new Error(`Invalid order ID: ${orderId}`);
+        }
+
+        const orderData = await getOrderById(orderId);
         setOrder(orderData);
       } catch (error) {
         console.error("Error fetching order:", error);
@@ -30,8 +34,10 @@ const OrderSuccessPage = () => {
       }
     };
 
-    if (orderId) {
+    if (orderId && orderId !== "undefined" && orderId !== "null") {
       fetchOrder();
+    } else {
+      setLoading(false);
     }
   }, [orderId]);
 
@@ -128,7 +134,7 @@ const OrderSuccessPage = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {order.customerInfo && (
-                  <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="bg-gray-50 rounded-lg p-6 text-black">
                     <h3 className="text-lg font-semibold mb-4">
                       Customer Details
                     </h3>
@@ -146,7 +152,7 @@ const OrderSuccessPage = () => {
                   </div>
                 )}
                 {order.shippingAddress && (
-                  <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="bg-gray-50 rounded-lg p-6 text-black">
                     <h3 className="text-lg font-semibold mb-4">
                       Shipping Address
                     </h3>
@@ -173,7 +179,7 @@ const OrderSuccessPage = () => {
 
           {/* Order Details */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <h2 className="text-2xl font-bold text-black mb-6">
               Order Details
             </h2>
             <div className="space-y-4">
@@ -203,7 +209,7 @@ const OrderSuccessPage = () => {
             </div>
 
             <div className="mt-6 border-t pt-4">
-              <div className="flex justify-between text-lg">
+              <div className="flex justify-between text-lg text-black">
                 <span>Subtotal:</span>
                 <span>
                   ₹
@@ -212,19 +218,19 @@ const OrderSuccessPage = () => {
                     "0.00"}
                 </span>
               </div>
-              <div className="flex justify-between text-lg">
+              <div className="flex justify-between text-lg text-black">
                 <span>Shipping:</span>
                 <span>₹{order.shippingCost?.toFixed(2) || "50.00"}</span>
               </div>
               {order.paymentMethod && (
-                <div className="flex justify-between text-lg">
+                <div className="flex justify-between text-lg text-black">
                   <span>Payment Method:</span>
                   <span className="capitalize">
                     {order.paymentMethod.replace("_", " ")}
                   </span>
                 </div>
               )}
-              <div className="flex justify-between text-xl font-bold mt-2">
+              <div className="flex justify-between text-xl font-bold mt-2 text-black">
                 <span>Total:</span>
                 <span>
                   ₹
@@ -284,7 +290,7 @@ const OrderSuccessPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="border rounded-lg p-6">
                 <QrCode className="h-8 w-8 text-purple-600 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
+                <h3 className="text-lg font-semibold mb-2 text-black">
                   UPI / QR Code Payment
                 </h3>
                 <p className="text-gray-600 mb-4">
@@ -300,13 +306,13 @@ const OrderSuccessPage = () => {
 
               <div className="border rounded-lg p-6">
                 <MapPin className="h-8 w-8 text-purple-600 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
+                <h3 className="text-lg font-semibold mb-2 text-black">
                   Cash Payment at Store
                 </h3>
                 <p className="text-gray-600 mb-4">
                   Pay in cash at our store location after order confirmation.
                 </p>
-                <p className="font-semibold">KP26 Room 1A-77</p>
+                <p className="font-semibold text-black">KP26 Room 1A-77</p>
               </div>
             </div>
           </div>
@@ -324,21 +330,27 @@ const OrderSuccessPage = () => {
                 className="flex items-center justify-center space-x-2 border rounded-lg p-4 hover:bg-green-50 transition-colors"
               >
                 <MessageCircle className="h-5 w-5 text-green-600" />
-                <span className="font-semibold">WhatsApp: +91 9556307048</span>
+                <span className="font-semibold text-black">
+                  WhatsApp: +91 955 630 7048
+                </span>
               </a>
               <a
                 href="tel:+919040989360"
                 className="flex items-center justify-center space-x-2 border rounded-lg p-4 hover:bg-blue-50 transition-colors"
               >
                 <Phone className="h-5 w-5 text-blue-600" />
-                <span className="font-semibold">Call: +91 9040989360</span>
+                <span className="font-semibold text-black">
+                  Call: +91 904 098 9360
+                </span>
               </a>
               <a
                 href="tel:+918093890570"
                 className="flex items-center justify-center space-x-2 border rounded-lg p-4 hover:bg-blue-50 transition-colors"
               >
                 <Phone className="h-5 w-5 text-blue-600" />
-                <span className="font-semibold">Call: +91 8093890570</span>
+                <span className="font-semibold text-black">
+                  Call: +91 809 389 0570
+                </span>
               </a>
             </div>
           </div>

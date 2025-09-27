@@ -16,7 +16,7 @@ import {
   CheckCircle,
   ArrowLeft,
 } from "lucide-react";
-import { saveOrderEnhanced } from "@/lib/storage";
+import { createOrder } from "@/api/EcommerceApi";
 
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart } = useCart();
@@ -138,7 +138,7 @@ const CheckoutPage = () => {
       };
 
       // Save order
-      const order = await saveOrderEnhanced(orderData);
+      const order = await createOrder(orderData);
 
       // Clear cart
       clearCart();

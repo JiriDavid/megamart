@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, Clock, Truck, Package, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
-import { getOrderByIdEnhanced } from "@/lib/storage";
+import { getOrderById } from "@/api/EcommerceApi";
 
 const TrackOrderPage = () => {
   const { orderId } = useParams();
@@ -23,7 +23,11 @@ const TrackOrderPage = () => {
   const fetchOrder = async (id) => {
     setLoading(true);
     try {
-      const orderData = await getOrderByIdEnhanced(id);
+      if (!id || id === "undefined" || id === "null") {
+        throw new Error(`Invalid order ID: ${id}`);
+      }
+      
+      const orderData = await getOrderById(id);
       setOrder(orderData);
     } catch (error) {
       console.error("Error fetching order:", error);
@@ -44,6 +48,7 @@ const TrackOrderPage = () => {
       { key: "pending", label: "Order Placed", icon: Clock },
       { key: "confirmed", label: "Order Confirmed", icon: CheckCircle },
       { key: "paid", label: "Payment Received", icon: CheckCircle },
+      { key: "processing", label: "Processing", icon: Package },
       { key: "shipped", label: "Order Shipped", icon: Truck },
       { key: "delivered", label: "Delivered", icon: Package },
     ];
@@ -125,16 +130,23 @@ const TrackOrderPage = () => {
 
               {/* Status Timeline */}
               <div className="relative">
-                <div className="flex justify-between items-center">
+                <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-300"></div>
+                <div 
+                  className="absolute top-6 left-0 h-0.5 bg-green-500 transition-all duration-500"
+                  style={{ 
+                    width: `${(getStatusSteps(order.status).filter(s => s.completed).length - 1) * (100 / (getStatusSteps(order.status).length - 1))}%` 
+                  }}
+                ></div>
+                <div className="relative flex justify-between items-center">
                   {getStatusSteps(order.status).map((step, index) => {
                     const Icon = step.icon;
                     return (
                       <div
                         key={step.key}
-                        className="flex flex-col items-center flex-1"
+                        className="flex flex-col items-center"
                       >
                         <div
-                          className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                          className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 relative z-10 ${
                             step.completed
                               ? "bg-green-500 text-white"
                               : step.current
@@ -153,14 +165,6 @@ const TrackOrderPage = () => {
                         >
                           {step.label}
                         </p>
-                        {index < getStatusSteps(order.status).length - 1 && (
-                          <div
-                            className={`absolute top-6 left-1/2 w-full h-0.5 ${
-                              step.completed ? "bg-green-500" : "bg-gray-300"
-                            }`}
-                            style={{ transform: "translateX(50%)", zIndex: -1 }}
-                          />
-                        )}
                       </div>
                     );
                   })}
@@ -174,13 +178,13 @@ const TrackOrderPage = () => {
                 Order Details
               </h2>
               <div className="space-y-4">
-                {order.items.map((item, index) => (
+                {order.items && order.items.map((item, index) => (
                   <div
                     key={index}
                     className="flex items-center space-x-4 border-b pb-4 last:border-b-0"
                   >
                     <img
-                      src={item.image}
+                      src={item.image || "https://via.placeholder.com/64"}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded-lg"
                     />
@@ -188,12 +192,13 @@ const TrackOrderPage = () => {
                       <h3 className="font-semibold text-gray-900">
                         {item.name}
                       </h3>
-                      <p className="text-sm text-gray-600">
-                        Quantity: {item.quantity} | Size: {item.size} | Color:{" "}
-                        {item.color}
-                      </p>
+                      <div className="text-sm text-gray-600">
+                        <span>Quantity: {item.quantity}</span>
+                        {item.size && <span> | Size: {item.size}</span>}
+                        {item.color && <span> | Color: {item.color}</span>}
+                      </div>
                       <p className="text-lg font-bold text-purple-600">
-                        ₹{(item.price * item.quantity).toFixed(2)}
+                        ₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -203,23 +208,24 @@ const TrackOrderPage = () => {
               <div className="mt-6 border-t pt-4">
                 <div className="flex justify-between text-lg">
                   <span>Subtotal:</span>
-                  <span>₹{order.subtotal.toFixed(2)}</span>
+                  <span>₹{(order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg">
                   <span>Shipping:</span>
-                  <span>₹{order.shippingCost.toFixed(2)}</span>
+                  <span>₹{order.shippingCost ? order.shippingCost.toFixed(2) : '50.00'}</span>
                 </div>
                 <div className="flex justify-between text-xl font-bold mt-2">
                   <span>Total:</span>
-                  <span>₹{order.total.toFixed(2)}</span>
+                  <span>₹{(order.totalAmount || order.total || 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
             {/* Delivery Info */}
-            {order.status === "paid" ||
+            {(order.status === "paid" ||
+            order.status === "processing" ||
             order.status === "shipped" ||
-            order.status === "delivered" ? (
+            order.status === "delivered") ? (
               <div className="bg-blue-50 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-blue-900 mb-2">
                   Delivery Information
@@ -228,8 +234,35 @@ const TrackOrderPage = () => {
                   Your order is expected to be delivered within 5 working days
                   from the date of payment confirmation.
                 </p>
+                {order.trackingNumber && (
+                  <p className="text-blue-800 mt-2">
+                    <span className="font-semibold">Tracking Number:</span> {order.trackingNumber}
+                  </p>
+                )}
               </div>
             ) : null}
+
+            {/* Order History */}
+            {order.orderHistory && order.orderHistory.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Order History
+                </h2>
+                <div className="space-y-4">
+                  {order.orderHistory.map((history, index) => (
+                    <div key={index} className="flex justify-between items-center py-3 border-b last:border-b-0">
+                      <div>
+                        <p className="font-semibold text-gray-900 capitalize">{history.status}</p>
+                        {history.note && <p className="text-sm text-gray-600">{history.note}</p>}
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {new Date(history.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         ) : searchId && !loading ? (
           <motion.div
