@@ -136,18 +136,33 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something went wrong!" });
 });
 
-// Start server
-const startServer = async () => {
-  const dbConnected = await connectDB();
-
-  app.listen(PORT, () => {
-    console.log(`\n🚀 Server running on port ${PORT}`);
-    console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
-    console.log(
-      `📊 Database: ${dbConnected ? "MongoDB Atlas" : "LocalStorage fallback"}`
-    );
-    console.log("─".repeat(50));
-  });
+// Initialize database connection
+const initializeApp = async () => {
+  await connectDB();
 };
 
-startServer();
+// Initialize for deployment
+initializeApp();
+
+// For local development only
+if (!process.env.VERCEL) {
+  const startServer = async () => {
+    const dbConnected = await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`\n🚀 Server running on port ${PORT}`);
+      console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
+      console.log(
+        `📊 Database: ${
+          dbConnected ? "MongoDB Atlas" : "LocalStorage fallback"
+        }`
+      );
+      console.log("─".repeat(50));
+    });
+  };
+
+  startServer();
+}
+
+// Export for serverless deployment
+export default app;
