@@ -42,11 +42,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
   // Override res.send to ensure JSON responses
   const originalSend = res.send;
-  res.send = function(data) {
-    if (typeof data === 'object' && data !== null) {
+  res.send = function (data) {
+    if (typeof data === "object" && data !== null) {
       return res.json(data);
     }
-    if (typeof data !== 'string') {
+    if (typeof data !== "string") {
       return res.json({ data: String(data) });
     }
     return originalSend.call(this, data);
@@ -145,9 +145,9 @@ initializeApp();
 app.get("*", (req, res) => {
   if (!req.path.startsWith("/api")) {
     // This shouldn't happen in serverless, but just in case
-    res.status(404).json({ 
+    res.status(404).json({
       error: "Route not found",
-      message: "This endpoint should be handled by Vercel routing" 
+      message: "This endpoint should be handled by Vercel routing",
     });
   } else {
     res.status(404).json({ error: "API endpoint not found" });
