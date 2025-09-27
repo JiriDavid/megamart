@@ -5,15 +5,55 @@ import mongoose from "mongoose";
 const router = express.Router();
 
 // Middleware to check database connection
-const checkDBConnection = (req, res, next) => {
-  if (mongoose.connection.readyState !== 1) {
+const checkDBConnection = async (req, res, next) => {
+  // If already connected, proceed
+  if (mongoose.connection.readyState === 1) {
+    return next();
+  }
+
+  // In serverless/production, if not connected, use fallback immediately
+  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
     return res.status(503).json({
       error: "Database not available",
       message: "Using localStorage fallback on frontend",
       fallback: true,
     });
   }
-  next();
+
+  // In development, try to connect
+  try {
+    const isLocalhost =
+      process.env.MONGODB_URI?.includes("localhost") ||
+      !process.env.MONGODB_URI?.includes("mongodb+srv");
+
+    await mongoose.connect(
+      process.env.MONGODB_URI || "mongodb://localhost:27017/megamart",
+      isLocalhost
+        ? {}
+        : {
+            ssl: true,
+            tls: true,
+            tlsAllowInvalidCertificates: false,
+            tlsAllowInvalidHostnames: false,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+          }
+    );
+
+    // Check if connection is now ready
+    if (mongoose.connection.readyState === 1) {
+      return next();
+    }
+  } catch (error) {
+    console.error("Database connection check failed:", error);
+  }
+
+  // If connection failed or still not ready, return fallback
+  return res.status(503).json({
+    error: "Database not available",
+    message: "Using localStorage fallback on frontend",
+    fallback: true,
+  });
 };
 
 // GET /api/products/categories - Get all categories (MUST come before /:id route)

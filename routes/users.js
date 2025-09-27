@@ -142,6 +142,15 @@ router.delete("/:id", async (req, res) => {
 // POST /api/users/login - User login
 router.post("/login", async (req, res) => {
   try {
+    // Check database connection for login
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        error: "Database not available",
+        message: "Using localStorage fallback on frontend",
+        fallback: true,
+      });
+    }
+
     const { identifier, password } = req.body;
 
     // Find user by email or username

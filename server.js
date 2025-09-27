@@ -58,6 +58,11 @@ app.use((req, res, next) => {
 // Database connection
 const connectDB = async () => {
   try {
+    // Check if already connected
+    if (mongoose.connection.readyState === 1) {
+      return true;
+    }
+
     const isLocalhost =
       process.env.MONGODB_URI?.includes("localhost") ||
       !process.env.MONGODB_URI?.includes("mongodb+srv");
@@ -97,6 +102,21 @@ const connectDB = async () => {
     return false;
   }
 };
+
+// Middleware to ensure database connection for API routes
+app.use("/api", async (req, res, next) => {
+  try {
+    const connected = await connectDB();
+    if (!connected) {
+      // For serverless, we still want to proceed but routes will handle fallback
+      console.log("Database not connected, proceeding with fallback handling");
+    }
+    next();
+  } catch (error) {
+    console.error("Database middleware error:", error);
+    next();
+  }
+});
 
 // Routes
 app.use("/api/products", productRoutes);
@@ -140,7 +160,7 @@ const initializeApp = async () => {
 };
 
 // Initialize for deployment (both local and serverless)
-initializeApp();
+// initializeApp(); // Removed for serverless - connection handled per request
 
 // Add catch-all for non-API routes in serverless (should not happen due to Vercel routing)
 app.get("*", (req, res) => {
