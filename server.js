@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
+import serverless from "serverless-http";
 import productRoutes from "./routes/products.js";
 import orderRoutes from "./routes/orders.js";
 import userRoutes from "./routes/users.js";
@@ -175,4 +176,4 @@ if (!process.env.VERCEL) {
 }
 
 // Export for serverless deployment
-export default app;
+export default serverless(app);
