@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { initializeSampleData } from "@/lib/storage";
 import HomePage from "@/pages/HomePage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import ProductsPage from "@/pages/ProductsPage";
@@ -22,6 +23,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import ShoppingCart from "@/components/ShoppingCart";
 
 function App() {
+  useEffect(() => {
+    // Initialize sample data on app startup
+    initializeSampleData();
+  }, []);
+
   return (
     <>
       <Helmet>

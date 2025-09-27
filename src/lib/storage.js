@@ -179,7 +179,44 @@ export const initializeSampleData = async () => {
       for (const product of sampleProducts) {
         saveProductFallback(product);
       }
-      console.log("✅ Sample data initialized in localStorage");
+      console.log("✅ Sample products initialized in localStorage");
+    }
+
+    // Initialize sample users if none exist
+    const users = getUsersFallback();
+    if (users.length === 0) {
+      console.log("🔄 Initializing sample users in localStorage");
+      const sampleUsers = [
+        {
+          firstName: "John",
+          lastName: "Doe",
+          email: "john@example.com",
+          username: "johndoe",
+          password: "password123",
+          role: "user",
+        },
+        {
+          firstName: "Jane",
+          lastName: "Smith",
+          email: "jane@example.com",
+          username: "janesmith",
+          password: "password123",
+          role: "user",
+        },
+        {
+          firstName: "Admin",
+          lastName: "User",
+          email: "admin@example.com",
+          username: "admin",
+          password: "admin123",
+          role: "admin",
+        },
+      ];
+
+      for (const user of sampleUsers) {
+        saveUserFallback(user);
+      }
+      console.log("✅ Sample users initialized in localStorage");
     }
   } catch (error) {
     console.error("Error initializing sample data:", error);
