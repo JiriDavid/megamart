@@ -14,7 +14,7 @@
     "start": "cross-env NODE_ENV=production node server.js",
     "seed": "node seed.js",
     "test-api": "node test-api.js",
-    "vercel-build": "npm run build"
+    "vercel-build": "vite build"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.0.5",
