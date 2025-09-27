@@ -141,34 +141,24 @@ router.delete("/:id", async (req, res) => {
 
 // POST /api/users/login - User login
 router.post("/login", async (req, res) => {
-  try {
-    // Check database connection for login
-    if (mongoose.connection.readyState !== 1) {
-      console.log("Database not connected for login, using fallback");
-      return res.status(503).json({
-        error: "Database not available",
-        message: "Using localStorage fallback on frontend",
-        fallback: true,
-      });
-    }
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: "Database unavailable",
+      fallback: true,
+    });
+  }
 
+  try {
     const { identifier, password } = req.body;
 
-    // Find user by email or username
     const user = await User.findOne({
       $or: [{ email: identifier }, { username: identifier }],
     });
 
-    if (!user) {
+    if (!user || user.password !== password) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Simple password check (in production, use bcrypt)
-    if (user.password !== password) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // Return user without password
     const userResponse = user.toObject();
     delete userResponse.password;
 

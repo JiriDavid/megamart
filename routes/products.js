@@ -4,70 +4,36 @@ import mongoose from "mongoose";
 
 const router = express.Router();
 
-// Middleware to check database connection
-const checkDBConnection = async (req, res, next) => {
-  // If already connected, proceed
-  if (mongoose.connection.readyState === 1) {
-    return next();
+// Simple database check helper
+const isDBConnected = () => mongoose.connection.readyState === 1;
+
+// GET /api/products/categories
+router.get("/categories", async (req, res) => {
+  if (!isDBConnected()) {
+    return res.status(503).json({
+      error: "Database unavailable",
+      fallback: true,
+    });
   }
 
-  // Always try to connect first, regardless of environment
-  try {
-    const isLocalhost =
-      process.env.MONGODB_URI?.includes("localhost") ||
-      !process.env.MONGODB_URI?.includes("mongodb+srv");
-
-    console.log("Attempting database connection in middleware...");
-
-    await mongoose.connect(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/megamart",
-      isLocalhost
-        ? {}
-        : {
-            ssl: true,
-            tls: true,
-            tlsAllowInvalidCertificates: false,
-            tlsAllowInvalidHostnames: false,
-            serverSelectionTimeoutMS: 5000, // Shorter timeout for serverless
-            socketTimeoutMS: 45000,
-          }
-    );
-
-    // Check if connection is now ready
-    if (mongoose.connection.readyState === 1) {
-      console.log("Database connected successfully in middleware");
-      return next();
-    }
-  } catch (error) {
-    console.error("Database connection failed in middleware:", error.message);
-  }
-
-  // If connection failed or still not ready, return fallback
-  console.log("Database not available, using fallback");
-  return res.status(503).json({
-    error: "Database not available",
-    message: "Using localStorage fallback on frontend",
-    fallback: true,
-  });
-};
-
-// GET /api/products/categories - Get all categories (MUST come before /:id route)
-router.get("/categories", checkDBConnection, async (req, res) => {
   try {
     const categories = await Product.distinct("category");
-    const categoryObjects = categories.map((category) => ({
-      id: category,
-      name: category,
-    }));
-    res.json({ categories: categoryObjects });
+    res.json({ categories: categories.map((cat) => ({ id: cat, name: cat })) });
   } catch (error) {
     console.error("Error fetching categories:", error);
     res.status(500).json({ error: "Failed to fetch categories" });
   }
 });
 
-// GET /api/products - Get all products with optional filtering
-router.get("/", checkDBConnection, async (req, res) => {
+// GET /api/products
+router.get("/", async (req, res) => {
+  if (!isDBConnected()) {
+    return res.status(503).json({
+      error: "Database unavailable",
+      fallback: true,
+    });
+  }
+
   try {
     const {
       category,
@@ -76,40 +42,25 @@ router.get("/", checkDBConnection, async (req, res) => {
       limit = 12,
       sort = "-createdAt",
     } = req.query;
+    const query = {};
 
-    let query = {};
-
-    // Filter by category
-    if (category) {
-      query.category = category;
-    }
-
-    // Search by name or description
-    if (search) {
-      query.$text = { $search: search };
-    }
-
-    const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      sort: sort,
-      populate: [],
-    };
+    if (category) query.category = category;
+    if (search) query.$text = { $search: search };
 
     const products = await Product.find(query)
-      .sort(options.sort)
-      .limit(options.limit)
-      .skip((options.page - 1) * options.limit);
+      .sort(sort)
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
 
     const total = await Product.countDocuments(query);
 
     res.json({
       products,
       pagination: {
-        page: options.page,
-        limit: options.limit,
+        page: parseInt(page),
+        limit: parseInt(limit),
         total,
-        pages: Math.ceil(total / options.limit),
+        pages: Math.ceil(total / parseInt(limit)),
       },
     });
   } catch (error) {
@@ -118,31 +69,24 @@ router.get("/", checkDBConnection, async (req, res) => {
   }
 });
 
-// GET /api/products/:id - Get single product
-router.get("/:id", checkDBConnection, async (req, res) => {
+// GET /api/products/:id
+router.get("/:id", async (req, res) => {
+  if (!isDBConnected()) {
+    return res.status(503).json({
+      error: "Database unavailable",
+      fallback: true,
+    });
+  }
+
   try {
     const productId = req.params.id;
-
-    // Add validation for undefined or invalid IDs
-    if (!productId || productId === "undefined" || productId === "null") {
-      return res.status(400).json({
-        error: "Invalid product ID",
-        received: productId,
-        message: "Product ID cannot be undefined or null",
-      });
+    if (!productId || productId === "undefined") {
+      return res.status(400).json({ error: "Invalid product ID" });
     }
 
-    let product;
-
-    // Try to find by MongoDB ObjectId first
-    if (mongoose.Types.ObjectId.isValid(productId)) {
-      product = await Product.findById(productId);
-    } else {
-      // If not a valid ObjectId, try to find by any ID field
-      product = await Product.findOne({
-        $or: [{ _id: productId }, { id: productId }],
-      });
-    }
+    const product = mongoose.Types.ObjectId.isValid(productId)
+      ? await Product.findById(productId)
+      : await Product.findOne({ $or: [{ _id: productId }, { id: productId }] });
 
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
@@ -155,79 +99,76 @@ router.get("/:id", checkDBConnection, async (req, res) => {
   }
 });
 
-// POST /api/products - Create new product
-router.post("/", checkDBConnection, async (req, res) => {
+// POST /api/products
+router.post("/", async (req, res) => {
+  if (!isDBConnected()) {
+    return res.status(503).json({
+      error: "Database unavailable",
+      fallback: true,
+    });
+  }
+
   try {
     const product = new Product(req.body);
     await product.save();
     res.status(201).json(product);
   } catch (error) {
     console.error("Error creating product:", error);
-    if (error.name === "ValidationError") {
-      return res.status(400).json({ error: error.message });
-    }
     res.status(500).json({ error: "Failed to create product" });
   }
 });
 
-// PUT /api/products/:id - Update product
-router.put("/:id", checkDBConnection, async (req, res) => {
+// PUT /api/products/:id
+router.put("/:id", async (req, res) => {
+  if (!isDBConnected()) {
+    return res.status(503).json({
+      error: "Database unavailable",
+      fallback: true,
+    });
+  }
+
   try {
     const productId = req.params.id;
-    let product;
-
-    // Try to update by MongoDB ObjectId first
-    if (mongoose.Types.ObjectId.isValid(productId)) {
-      product = await Product.findByIdAndUpdate(productId, req.body, {
-        new: true,
-        runValidators: true,
-      });
-    } else {
-      // If not a valid ObjectId, try to find and update by any ID field
-      product = await Product.findOneAndUpdate(
-        {
-          $or: [{ _id: productId }, { id: productId }],
-        },
-        req.body,
-        {
-          new: true,
-          runValidators: true,
-        }
-      );
-    }
+    const product = mongoose.Types.ObjectId.isValid(productId)
+      ? await Product.findByIdAndUpdate(productId, req.body, { new: true })
+      : await Product.findOneAndUpdate(
+          { $or: [{ _id: productId }, { id: productId }] },
+          req.body,
+          { new: true }
+        );
 
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
+
     res.json(product);
   } catch (error) {
     console.error("Error updating product:", error);
-    if (error.name === "ValidationError") {
-      return res.status(400).json({ error: error.message });
-    }
     res.status(500).json({ error: "Failed to update product" });
   }
 });
 
-// DELETE /api/products/:id - Delete product
-router.delete("/:id", checkDBConnection, async (req, res) => {
+// DELETE /api/products/:id
+router.delete("/:id", async (req, res) => {
+  if (!isDBConnected()) {
+    return res.status(503).json({
+      error: "Database unavailable",
+      fallback: true,
+    });
+  }
+
   try {
     const productId = req.params.id;
-    let product;
-
-    // Try to delete by MongoDB ObjectId first
-    if (mongoose.Types.ObjectId.isValid(productId)) {
-      product = await Product.findByIdAndDelete(productId);
-    } else {
-      // If not a valid ObjectId, try to find and delete by any ID field
-      product = await Product.findOneAndDelete({
-        $or: [{ _id: productId }, { id: productId }],
-      });
-    }
+    const product = mongoose.Types.ObjectId.isValid(productId)
+      ? await Product.findByIdAndDelete(productId)
+      : await Product.findOneAndDelete({
+          $or: [{ _id: productId }, { id: productId }],
+        });
 
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
+
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error deleting product:", error);

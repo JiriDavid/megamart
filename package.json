@@ -6,15 +6,9 @@
   "description": "A modern e-commerce MVP for MegaMart - Premium Shoes & Clothing",
   "scripts": {
     "dev": "vite",
-    "dev:server": "node server.js",
-    "dev:full": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "vite build",
     "preview": "vite preview",
-    "server": "node server.js",
-    "start": "cross-env NODE_ENV=production node server.js",
-    "seed": "node seed.js",
-    "test-api": "node test-api.js",
-    "vercel-build": "vite build"
+    "server": "node server.js"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.0.5",
@@ -48,23 +42,15 @@
     "zustand": "^4.4.6"
   },
   "devDependencies": {
-    "@babel/generator": "^7.27.0",
-    "@babel/parser": "^7.27.0",
-    "@babel/traverse": "^7.27.0",
-    "@babel/types": "^7.27.0",
     "@types/node": "^20.8.3",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.16",
-    "concurrently": "^8.2.2",
-    "cross-env": "^10.0.0",
     "eslint": "^8.57.1",
     "eslint-config-react-app": "^7.0.1",
-    "node-fetch": "^3.3.2",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.3",
-    "terser": "^5.39.0",
     "vite": "^4.4.5"
   }
 }
