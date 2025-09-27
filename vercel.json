@@ -36,11 +36,5 @@
       "src": "/(.*)",
       "dest": "/dist/index.html"
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/((?!api|assets|.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|json|xml|txt|map|webp)).*)",
-      "destination": "/index.html"
-    }
   ]
 }
