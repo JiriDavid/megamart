@@ -1,7 +1,7 @@
 import express from "express";
+import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import Review from "../models/Review.js";
 import Product from "../models/Product.js";
-import { authenticateToken } from "../middleware/auth.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
@@ -117,13 +117,13 @@ router.get("/product/:productId", async (req, res) => {
 });
 
 // POST /api/reviews - Create a new review (requires authentication)
-router.post("/", authenticateToken, async (req, res) => {
+router.post("/", ClerkExpressRequireAuth(), async (req, res) => {
   try {
     const { product, rating, title, comment, images } = req.body;
 
     // Check if user already reviewed this product
     const existingReview = await Review.findOne({
-      user: req.user.id,
+      user: req.auth.userId,
       product,
     });
 
@@ -137,7 +137,7 @@ router.post("/", authenticateToken, async (req, res) => {
     // You can add order validation here if needed
 
     const review = new Review({
-      user: req.user.id,
+      user: req.auth.userId,
       product,
       rating,
       title,
@@ -162,7 +162,7 @@ router.post("/", authenticateToken, async (req, res) => {
 });
 
 // PUT /api/reviews/:id - Update review (only by review author)
-router.put("/:id", authenticateToken, async (req, res) => {
+router.put("/:id", ClerkExpressRequireAuth(), async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid review ID format" });
@@ -174,7 +174,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Review not found" });
     }
 
-    if (review.user.toString() !== req.user.id) {
+    if (review.user.toString() !== req.auth.userId) {
       return res
         .status(403)
         .json({ error: "Not authorized to update this review" });
@@ -201,7 +201,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
 });
 
 // DELETE /api/reviews/:id - Delete review (by author or admin)
-router.delete("/:id", authenticateToken, async (req, res) => {
+router.delete("/:id", ClerkExpressRequireAuth(), async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid review ID format" });
@@ -213,7 +213,8 @@ router.delete("/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Review not found" });
     }
 
-    if (review.user.toString() !== req.user.id && req.user.role !== "admin") {
+    const userRole = req.auth.publicMetadata?.role || "user";
+    if (review.user.toString() !== req.auth.userId && userRole !== "admin") {
       return res
         .status(403)
         .json({ error: "Not authorized to delete this review" });
@@ -232,7 +233,7 @@ router.delete("/:id", authenticateToken, async (req, res) => {
 });
 
 // PUT /api/reviews/:id/helpful - Mark review as helpful
-router.put("/:id/helpful", authenticateToken, async (req, res) => {
+router.put("/:id/helpful", ClerkExpressRequireAuth(), async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid review ID format" });

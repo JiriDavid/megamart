@@ -1,13 +1,13 @@
 import express from "express";
+import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import Payment from "../models/Payment.js";
 import Order from "../models/Order.js";
-import { authenticateToken } from "../middleware/auth.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
 
 // All payment routes require authentication
-router.use(authenticateToken);
+router.use(ClerkExpressRequireAuth());
 
 // GET /api/payments - Get user's payment history
 router.get("/", async (req, res) => {
@@ -20,7 +20,7 @@ router.get("/", async (req, res) => {
       sort = "-createdAt",
     } = req.query;
 
-    let query = { user: req.user.id };
+    let query = { user: req.auth.userId };
 
     if (status) query.status = status;
     if (method) query.method = method;
@@ -64,7 +64,7 @@ router.get("/:id", async (req, res) => {
 
     const payment = await Payment.findOne({
       _id: req.params.id,
-      user: req.user.id,
+      user: req.auth.userId,
     }).populate("order", "items totalAmount status");
 
     if (!payment) {
@@ -87,7 +87,7 @@ router.post("/", async (req, res) => {
     // Verify the order belongs to the user
     const order = await Order.findOne({
       _id: orderId,
-      user: req.user.id,
+      user: req.auth.userId,
     });
 
     if (!order) {
@@ -96,7 +96,7 @@ router.post("/", async (req, res) => {
 
     const payment = new Payment({
       order: orderId,
-      user: req.user.id,
+      user: req.auth.userId,
       amount,
       method,
       transactionId,
@@ -119,14 +119,15 @@ router.post("/", async (req, res) => {
 });
 
 // PUT /api/payments/:id/status - Update payment status (admin only)
-router.put("/:id/status", authenticateToken, async (req, res) => {
+router.put("/:id/status", ClerkExpressRequireAuth(), async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ error: "Invalid payment ID format" });
     }
 
-    // Check if user is admin
-    if (req.user.role !== "admin") {
+    // Check if user is admin (using Clerk's publicMetadata)
+    const userRole = req.auth.publicMetadata?.role || "user";
+    if (userRole !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
 
@@ -148,7 +149,7 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
       payment.refundAmount = refundAmount || payment.amount;
       payment.refundReason = refundReason;
       payment.refundedAt = new Date();
-      payment.refundedBy = req.user.id;
+      payment.refundedBy = req.auth.userId;
     }
 
     await payment.save();
@@ -173,9 +174,10 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
 });
 
 // GET /api/payments/stats - Get payment statistics (admin only)
-router.get("/admin/stats", authenticateToken, async (req, res) => {
+router.get("/admin/stats", ClerkExpressRequireAuth(), async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
+    const userRole = req.auth.publicMetadata?.role || "user";
+    if (userRole !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
     }
 

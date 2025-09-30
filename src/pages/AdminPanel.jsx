@@ -24,7 +24,8 @@ import {
   deleteProduct,
 } from "@/api/EcommerceApi";
 import { getUsersEnhanced } from "@/lib/storage";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useClerk } from "@clerk/clerk-react";
 
 const AdminPanel = () => {
   const [products, setProducts] = useState([]);
@@ -34,7 +35,7 @@ const AdminPanel = () => {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const { toast } = useToast();
-  const { logout } = useAuth();
+  const { signOut } = useClerk();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,7 +45,7 @@ const AdminPanel = () => {
   }, []);
 
   const handleLogout = () => {
-    logout();
+    signOut();
     navigate("/login");
     toast({
       title: "Logged Out",

@@ -1,17 +1,17 @@
 import express from "express";
+import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import Address from "../models/Address.js";
-import { authenticateToken } from "../middleware/auth.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
 
 // All address routes require authentication
-router.use(authenticateToken);
+router.use(ClerkExpressRequireAuth());
 
 // GET /api/addresses - Get all addresses for the authenticated user
 router.get("/", async (req, res) => {
   try {
-    const addresses = await Address.find({ user: req.user.id }).sort({
+    const addresses = await Address.find({ user: req.auth.userId }).sort({
       isDefault: -1,
       createdAt: -1,
     });
@@ -27,7 +27,7 @@ router.get("/", async (req, res) => {
 router.get("/default", async (req, res) => {
   try {
     const address = await Address.findOne({
-      user: req.user.id,
+      user: req.auth.userId,
       isDefault: true,
     });
 
@@ -51,7 +51,7 @@ router.get("/:id", async (req, res) => {
 
     const address = await Address.findOne({
       _id: req.params.id,
-      user: req.user.id,
+      user: req.auth.userId,
     });
 
     if (!address) {
@@ -68,11 +68,11 @@ router.get("/:id", async (req, res) => {
 // POST /api/addresses - Create new address
 router.post("/", async (req, res) => {
   try {
-    const addressData = { ...req.body, user: req.user.id };
+    const addressData = { ...req.body, user: req.auth.userId };
 
     // If this is the first address or marked as default, make it default
     const existingAddresses = await Address.countDocuments({
-      user: req.user.id,
+      user: req.auth.userId,
     });
     if (existingAddresses === 0 || addressData.isDefault) {
       addressData.isDefault = true;
@@ -100,7 +100,7 @@ router.put("/:id", async (req, res) => {
 
     const address = await Address.findOne({
       _id: req.params.id,
-      user: req.user.id,
+      user: req.auth.userId,
     });
 
     if (!address) {
@@ -112,7 +112,7 @@ router.put("/:id", async (req, res) => {
     // If setting as default, remove default from other addresses
     if (updateData.isDefault) {
       await Address.updateMany(
-        { user: req.user.id, _id: { $ne: req.params.id } },
+        { user: req.auth.userId, _id: { $ne: req.params.id } },
         { isDefault: false }
       );
     }
@@ -138,11 +138,11 @@ router.put("/:id/default", async (req, res) => {
     }
 
     // Remove default from all addresses for this user
-    await Address.updateMany({ user: req.user.id }, { isDefault: false });
+    await Address.updateMany({ user: req.auth.userId }, { isDefault: false });
 
     // Set the specified address as default
     const address = await Address.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id },
+      { _id: req.params.id, user: req.auth.userId },
       { isDefault: true },
       { new: true }
     );
@@ -167,7 +167,7 @@ router.delete("/:id", async (req, res) => {
 
     const address = await Address.findOneAndDelete({
       _id: req.params.id,
-      user: req.user.id,
+      user: req.auth.userId,
     });
 
     if (!address) {
@@ -176,9 +176,11 @@ router.delete("/:id", async (req, res) => {
 
     // If deleted address was default, make another address default
     if (address.isDefault) {
-      const nextDefault = await Address.findOne({ user: req.user.id }).sort({
-        createdAt: -1,
-      });
+      const nextDefault = await Address.findOne({ user: req.auth.userId }).sort(
+        {
+          createdAt: -1,
+        }
+      );
       if (nextDefault) {
         nextDefault.isDefault = true;
         await nextDefault.save();

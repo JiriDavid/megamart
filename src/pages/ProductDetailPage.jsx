@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { getProductById } from "@/api/EcommerceApi";
 import { useCart } from "@/contexts/CartContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
@@ -28,7 +28,7 @@ const ProductDetailPage = () => {
   const [mainImageIndex, setMainImageIndex] = useState(0);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const { addToCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthContext();
   const { toast } = useToast();
 
   // Debug logging

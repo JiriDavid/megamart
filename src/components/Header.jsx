@@ -1,32 +1,16 @@
 import React from "react";
 import { motion } from "framer-motion";
-import {
-  ShoppingBag,
-  ShoppingCart,
-  Heart,
-  User,
-  LogIn,
-  LogOut,
-} from "lucide-react";
+import { ShoppingBag, ShoppingCart, Heart, User, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { UserButton } from "@clerk/clerk-react";
 
 const Header = () => {
   const { cart, wishlist } = useCart();
-  const { isAuthenticated, currentUser, isAdmin, logout } = useAuth();
-  const { toast } = useToast();
+  const { isAuthenticated, currentUser, isAdmin } = useAuthContext();
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
   const wishlistCount = wishlist.length;
-
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-  };
 
   return (
     <header className="bg-white shadow-lg sticky top-0 z-40">
@@ -119,16 +103,17 @@ const Header = () => {
                 >
                   <User className="h-6 w-6" />
                   <span className="hidden sm:inline">
-                    {currentUser?.name?.split(" ")[0] || "Profile"}
+                    {currentUser?.firstName || "Profile"}
                   </span>
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors"
-                >
-                  <LogOut className="h-6 w-6" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox: "h-8 w-8",
+                      userButtonPopoverCard: "shadow-lg border border-gray-200",
+                    },
+                  }}
+                />
               </div>
             ) : (
               <div className="flex items-center space-x-2">

@@ -1,24 +1,25 @@
 import express from "express";
+import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import Cart from "../models/Cart.js";
-import { authenticateToken } from "../middleware/auth.js";
+import Product from "../models/Product.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
 
 // All cart routes require authentication
-router.use(authenticateToken);
+router.use(ClerkExpressRequireAuth());
 
 // GET /api/cart - Get user's cart
 router.get("/", async (req, res) => {
   try {
-    let cart = await Cart.findOne({ user: req.user.id }).populate(
+    let cart = await Cart.findOne({ user: req.auth.userId }).populate(
       "items.product",
       "name image price category inStock"
     );
 
     if (!cart) {
       // Create empty cart if none exists
-      cart = new Cart({ user: req.user.id, items: [] });
+      cart = new Cart({ user: req.auth.userId, items: [] });
       await cart.save();
     }
 
@@ -38,10 +39,10 @@ router.post("/items", async (req, res) => {
       return res.status(400).json({ error: "Product ID is required" });
     }
 
-    let cart = await Cart.findOne({ user: req.user.id });
+    let cart = await Cart.findOne({ user: req.auth.userId });
 
     if (!cart) {
-      cart = new Cart({ user: req.user.id, items: [] });
+      cart = new Cart({ user: req.auth.userId, items: [] });
     }
 
     // Check if item already exists in cart
@@ -88,7 +89,7 @@ router.put("/items/:itemId", async (req, res) => {
       return res.status(400).json({ error: "Valid quantity is required" });
     }
 
-    const cart = await Cart.findOne({ user: req.user.id });
+    const cart = await Cart.findOne({ user: req.auth.userId });
 
     if (!cart) {
       return res.status(404).json({ error: "Cart not found" });
@@ -120,7 +121,7 @@ router.delete("/items/:itemId", async (req, res) => {
       return res.status(400).json({ error: "Invalid item ID format" });
     }
 
-    const cart = await Cart.findOne({ user: req.user.id });
+    const cart = await Cart.findOne({ user: req.auth.userId });
 
     if (!cart) {
       return res.status(404).json({ error: "Cart not found" });
@@ -144,7 +145,7 @@ router.delete("/items/:itemId", async (req, res) => {
 router.delete("/", async (req, res) => {
   try {
     const cart = await Cart.findOneAndUpdate(
-      { user: req.user.id },
+      { user: req.auth.userId },
       { items: [] },
       { new: true }
     );

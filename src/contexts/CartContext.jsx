@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import {
   getWishlistEnhanced,
   addToWishlistEnhanced as apiAddToWishlist,
@@ -12,7 +12,7 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [wishlistLoading, setWishlistLoading] = useState(false);
-  const { currentUser, isAuthenticated } = useAuth();
+  const { currentUser, isAuthenticated } = useAuthContext();
 
   useEffect(() => {
     if (isAuthenticated && currentUser) {

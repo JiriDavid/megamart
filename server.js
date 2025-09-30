@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import serverless from "serverless-http";
+import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import productRoutes from "./routes/products.js";
 import orderRoutes from "./routes/orders.js";
 import userRoutes from "./routes/users.js";
@@ -90,14 +91,14 @@ app.get("/api/health", async (req, res) => {
   try {
     const dbConnected = mongoose.connection.readyState === 1;
     const hasMongoURI = !!process.env.MONGODB_URI;
-    const hasJWTSecret = !!process.env.JWT_SECRET;
+    const hasClerkSecret = !!process.env.CLERK_SECRET_KEY;
 
     res.json({
       status: "OK",
       database: dbConnected ? "connected" : "disconnected",
       environment: {
         MONGODB_URI: hasMongoURI,
-        JWT_SECRET: hasJWTSecret,
+        CLERK_SECRET_KEY: hasClerkSecret,
         NODE_ENV: process.env.NODE_ENV,
         VERCEL: !!process.env.VERCEL,
       },

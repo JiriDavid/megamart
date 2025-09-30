@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
@@ -20,7 +20,7 @@ import { createOrder } from "@/api/EcommerceApi";
 
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart } = useCart();
-  const { currentUser, isAuthenticated } = useAuth();
+  const { currentUser, isAuthenticated } = useAuthContext();
   const { toast } = useToast();
   const navigate = useNavigate();
 

@@ -1,40 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Package, Heart, Settings, LogOut } from "lucide-react";
+import { User, Package, Heart, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { getOrdersEnhanced } from "@/lib/storage";
 import Header from "@/components/Header";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { UserProfile } from "@clerk/clerk-react";
 
 const UserProfilePage = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [orders, setOrders] = useState([]);
-  const [profileData, setProfileData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
-  const [isEditing, setIsEditing] = useState(false);
-  const { currentUser, logout, updateProfile } = useAuth();
+  const { currentUser } = useAuthContext();
   const { cart, wishlist } = useCart();
-  const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const loadUserData = async () => {
       if (currentUser) {
-        setProfileData({
-          name: currentUser.name || "",
-          email: currentUser.email || "",
-          phone: currentUser.phone || "",
-        });
-
-        // Load user's orders
+        // Load user's orders - note: this might need adjustment for Clerk user ID
         const userOrders = await getOrdersEnhanced().filter(
-          (order) => order.customerInfo?.email === currentUser.email
+          (order) =>
+            order.customerInfo?.email ===
+            currentUser.primaryEmailAddress?.emailAddress
         );
         setOrders(userOrders);
       }
@@ -42,32 +30,6 @@ const UserProfilePage = () => {
 
     loadUserData();
   }, [currentUser]);
-
-  const handleProfileUpdate = async () => {
-    const result = updateProfile(profileData);
-    if (result.success) {
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
-      });
-      setIsEditing(false);
-    } else {
-      toast({
-        title: "Update Failed",
-        description: result.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    navigate("/");
-  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -118,9 +80,11 @@ const UserProfilePage = () => {
                   <User className="h-10 w-10 text-white" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  {currentUser.name}
+                  {currentUser.firstName} {currentUser.lastName}
                 </h2>
-                <p className="text-gray-600">{currentUser.email}</p>
+                <p className="text-gray-600">
+                  {currentUser.primaryEmailAddress?.emailAddress}
+                </p>
               </div>
 
               <nav className="space-y-2">
@@ -163,14 +127,6 @@ const UserProfilePage = () => {
                   <Package className="h-5 w-5" />
                   <span>Cart ({cart.length})</span>
                 </Link>
-
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Logout</span>
-                </button>
               </nav>
             </div>
           </div>
@@ -187,79 +143,24 @@ const UserProfilePage = () => {
                   <h1 className="text-3xl font-bold text-gray-900">
                     My Profile
                   </h1>
-                  <Button
-                    onClick={() => setIsEditing(!isEditing)}
-                    variant={isEditing ? "outline" : "default"}
-                  >
-                    {isEditing ? "Cancel" : "Edit Profile"}
-                  </Button>
                 </div>
 
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={profileData.name}
-                        onChange={(e) =>
-                          setProfileData((prev) => ({
-                            ...prev,
-                            name: e.target.value,
-                          }))
-                        }
-                        className="w-full px-4 py-3 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="text-lg text-gray-900">
-                        {profileData.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address
-                    </label>
-                    <p className="text-lg text-gray-900">{profileData.email}</p>
-                    <p className="text-sm text-gray-500">
-                      Email cannot be changed
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="tel"
-                        value={profileData.phone}
-                        onChange={(e) =>
-                          setProfileData((prev) => ({
-                            ...prev,
-                            phone: e.target.value,
-                          }))
-                        }
-                        className="w-full px-4 py-3 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="text-lg text-gray-900">
-                        {profileData.phone || "Not provided"}
-                      </p>
-                    )}
-                  </div>
-
-                  {isEditing && (
-                    <Button
-                      onClick={handleProfileUpdate}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      Save Changes
-                    </Button>
-                  )}
+                <div className="mb-6">
+                  <p className="text-gray-600 mb-4">
+                    Manage your account settings and preferences using Clerk's
+                    user profile.
+                  </p>
+                  <UserProfile
+                    path="/profile"
+                    routing="path"
+                    appearance={{
+                      elements: {
+                        card: "shadow-none p-0",
+                        headerTitle: "hidden",
+                        headerSubtitle: "hidden",
+                      },
+                    }}
+                  />
                 </div>
               </motion.div>
             )}

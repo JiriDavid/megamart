@@ -11,6 +11,8 @@
     "server": "node server.js"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.49.0",
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.3",
     "@radix-ui/react-checkbox": "^1.0.4",
@@ -29,7 +31,6 @@
     "dotenv": "^17.2.2",
     "express": "^4.21.2",
     "framer-motion": "^10.16.4",
-    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.285.0",
     "mongoose": "^8.18.0",
     "react": "^18.2.0",
