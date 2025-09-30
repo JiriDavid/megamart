@@ -16,18 +16,28 @@ dotenv.config();
 
 const app = express();
 
-// Simple database connection
+// Simple database connection for serverless
 const connectDB = async () => {
   try {
+    // Check if already connected
     if (mongoose.connection.readyState === 1) return true;
 
-    await mongoose.connect(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/megamart",
-      {
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-      }
-    );
+    // Check if MONGODB_URI is available
+    if (!process.env.MONGODB_URI) {
+      console.error("❌ MONGODB_URI environment variable not set");
+      return false;
+    }
+
+    console.log("🔄 Attempting database connection...");
+
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 3000, // Reduced timeout for serverless
+      socketTimeoutMS: 10000,
+      maxPoolSize: 5, // Limit connection pool
+      minPoolSize: 0,
+      maxIdleTimeMS: 30000,
+    });
+
     console.log("✅ MongoDB Connected");
     return true;
   } catch (error) {
@@ -39,10 +49,19 @@ const connectDB = async () => {
 // Middleware to ensure database connection for API routes
 const ensureDBConnection = async (req, res, next) => {
   if (req.path.startsWith("/api/")) {
-    const connected = await connectDB();
-    if (!connected) {
+    try {
+      const connected = await connectDB();
+      if (!connected) {
+        console.log("🔄 Database unavailable, returning fallback response");
+        return res.status(503).json({
+          error: "Database unavailable",
+          fallback: true,
+        });
+      }
+    } catch (error) {
+      console.error("Database connection middleware error:", error);
       return res.status(503).json({
-        error: "Database connection failed",
+        error: "Database connection error",
         fallback: true,
       });
     }
@@ -68,12 +87,29 @@ app.use("/api/payments", paymentRoutes);
 
 // Health check
 app.get("/api/health", async (req, res) => {
-  const dbConnected = mongoose.connection.readyState === 1;
-  res.json({
-    status: "OK",
-    database: dbConnected ? "connected" : "disconnected",
-    timestamp: new Date().toISOString(),
-  });
+  try {
+    const dbConnected = mongoose.connection.readyState === 1;
+    const hasMongoURI = !!process.env.MONGODB_URI;
+    const hasJWTSecret = !!process.env.JWT_SECRET;
+
+    res.json({
+      status: "OK",
+      database: dbConnected ? "connected" : "disconnected",
+      environment: {
+        MONGODB_URI: hasMongoURI,
+        JWT_SECRET: hasJWTSecret,
+        NODE_ENV: process.env.NODE_ENV,
+        VERCEL: !!process.env.VERCEL,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "ERROR",
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Error handling
