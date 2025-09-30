@@ -141,13 +141,6 @@ router.delete("/:id", async (req, res) => {
 
 // POST /api/users/login - User login
 router.post("/login", async (req, res) => {
-  if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      error: "Database unavailable",
-      fallback: true,
-    });
-  }
-
   try {
     const { identifier, password } = req.body;
 

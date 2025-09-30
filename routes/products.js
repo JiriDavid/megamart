@@ -4,18 +4,8 @@ import mongoose from "mongoose";
 
 const router = express.Router();
 
-// Simple database check helper
-const isDBConnected = () => mongoose.connection.readyState === 1;
-
 // GET /api/products/categories
 router.get("/categories", async (req, res) => {
-  if (!isDBConnected()) {
-    return res.status(503).json({
-      error: "Database unavailable",
-      fallback: true,
-    });
-  }
-
   try {
     const categories = await Product.distinct("category");
     res.json({ categories: categories.map((cat) => ({ id: cat, name: cat })) });
@@ -27,13 +17,6 @@ router.get("/categories", async (req, res) => {
 
 // GET /api/products
 router.get("/", async (req, res) => {
-  if (!isDBConnected()) {
-    return res.status(503).json({
-      error: "Database unavailable",
-      fallback: true,
-    });
-  }
-
   try {
     const {
       category,
@@ -71,13 +54,6 @@ router.get("/", async (req, res) => {
 
 // GET /api/products/:id
 router.get("/:id", async (req, res) => {
-  if (!isDBConnected()) {
-    return res.status(503).json({
-      error: "Database unavailable",
-      fallback: true,
-    });
-  }
-
   try {
     const productId = req.params.id;
     if (!productId || productId === "undefined") {
@@ -101,13 +77,6 @@ router.get("/:id", async (req, res) => {
 
 // POST /api/products
 router.post("/", async (req, res) => {
-  if (!isDBConnected()) {
-    return res.status(503).json({
-      error: "Database unavailable",
-      fallback: true,
-    });
-  }
-
   try {
     const product = new Product(req.body);
     await product.save();
@@ -120,13 +89,6 @@ router.post("/", async (req, res) => {
 
 // PUT /api/products/:id
 router.put("/:id", async (req, res) => {
-  if (!isDBConnected()) {
-    return res.status(503).json({
-      error: "Database unavailable",
-      fallback: true,
-    });
-  }
-
   try {
     const productId = req.params.id;
     const product = mongoose.Types.ObjectId.isValid(productId)
@@ -150,13 +112,6 @@ router.put("/:id", async (req, res) => {
 
 // DELETE /api/products/:id
 router.delete("/:id", async (req, res) => {
-  if (!isDBConnected()) {
-    return res.status(503).json({
-      error: "Database unavailable",
-      fallback: true,
-    });
-  }
-
   try {
     const productId = req.params.id;
     const product = mongoose.Types.ObjectId.isValid(productId)

@@ -16,18 +16,17 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-
 // Simple database connection
 const connectDB = async () => {
   try {
     if (mongoose.connection.readyState === 1) return true;
 
     await mongoose.connect(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/megamart"
+      process.env.MONGODB_URI || "mongodb://localhost:27017/megamart",
+      {
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+      }
     );
     console.log("✅ MongoDB Connected");
     return true;
@@ -36,6 +35,26 @@ const connectDB = async () => {
     return false;
   }
 };
+
+// Middleware to ensure database connection for API routes
+const ensureDBConnection = async (req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    const connected = await connectDB();
+    if (!connected) {
+      return res.status(503).json({
+        error: "Database connection failed",
+        fallback: true,
+      });
+    }
+  }
+  next();
+};
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(ensureDBConnection);
 
 // Routes
 app.use("/api/products", productRoutes);
