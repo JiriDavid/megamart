@@ -38,7 +38,7 @@ const connectDB = async () => {
 
 // Middleware to ensure database connection for API routes
 const ensureDBConnection = async (req, res, next) => {
-  if (req.path.startsWith('/api/')) {
+  if (req.path.startsWith("/api/")) {
     const connected = await connectDB();
     if (!connected) {
       return res.status(503).json({
